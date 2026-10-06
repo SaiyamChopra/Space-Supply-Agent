@@ -47,18 +47,35 @@ class MicroOpsApp:
         style = ttk.Style(self.root)
         if "clam" in style.theme_names():
             style.theme_use("clam")
+        self.root.configure(background="#f3f6fb")
         style.configure("App.TFrame", background="#f4f6fa")
-        style.configure("Hero.TLabel", font=("Segoe UI", 20, "bold"), background="#f4f6fa", foreground="#17253b")
-        style.configure("Sub.TLabel", font=("Segoe UI", 10), background="#f4f6fa", foreground="#516178")
-        style.configure("Card.TLabelframe", background="#ffffff", padding=12)
-        style.configure("Card.TLabelframe.Label", font=("Segoe UI", 11, "bold"), foreground="#263c59")
-        style.configure("TButton", padding=(10, 6))
+        style.configure("Header.TFrame", background="#172554", padding=(18, 14))
+        style.configure("Hero.TLabel", font=("Segoe UI", 21, "bold"), background="#172554", foreground="#ffffff")
+        style.configure("HeaderSub.TLabel", font=("Segoe UI", 10), background="#172554", foreground="#bfdbfe")
+        style.configure("Sub.TLabel", font=("Segoe UI", 10), background="#f4f6fa", foreground="#64748b")
+        style.configure("Section.TLabel", font=("Segoe UI", 15, "bold"), background="#f4f6fa", foreground="#172554")
+        style.configure("Card.TLabelframe", background="#ffffff", padding=14, relief="solid", borderwidth=1)
+        style.configure("Card.TLabelframe.Label", font=("Segoe UI", 10, "bold"), foreground="#334155", background="#ffffff")
+        style.configure("TButton", font=("Segoe UI", 9, "bold"), padding=(11, 7), background="#e2e8f0", foreground="#1e293b")
+        style.map("TButton", background=[("active", "#cbd5e1"), ("pressed", "#94a3b8")])
+        style.configure("Accent.TButton", background="#2563eb", foreground="#ffffff")
+        style.map("Accent.TButton", background=[("active", "#1d4ed8"), ("pressed", "#1e40af")], foreground=[("active", "#ffffff")])
+        style.configure("TNotebook", background="#f4f6fa", borderwidth=0, tabmargins=(2, 4, 2, 0))
+        style.configure("TNotebook.Tab", padding=(14, 9), font=("Segoe UI", 9, "bold"), background="#e2e8f0", foreground="#475569")
+        style.map("TNotebook.Tab", background=[("selected", "#2563eb"), ("active", "#dbeafe")], foreground=[("selected", "#ffffff"), ("active", "#1e3a8a")])
+        style.configure("Treeview", rowheight=30, font=("Segoe UI", 9), background="#ffffff", fieldbackground="#ffffff", foreground="#1e293b", borderwidth=0)
+        style.configure("Treeview.Heading", font=("Segoe UI", 9, "bold"), background="#eaf0f8", foreground="#334155", padding=(8, 8))
+        style.map("Treeview", background=[("selected", "#bfdbfe")], foreground=[("selected", "#172554")])
+        style.configure("TEntry", padding=7, fieldbackground="#ffffff")
+        style.configure("TCombobox", padding=6, fieldbackground="#ffffff")
 
     def _build(self) -> None:
         outer = ttk.Frame(self.root, style="App.TFrame", padding=18)
         outer.pack(fill="both", expand=True)
-        ttk.Label(outer, text="MicroOps", style="Hero.TLabel").pack(anchor="w")
-        ttk.Label(outer, text="Three local agents for tracking, supplies, and a simple dependency-aware plan.", style="Sub.TLabel").pack(anchor="w", pady=(2, 14))
+        header = ttk.Frame(outer, style="Header.TFrame")
+        header.pack(fill="x", pady=(0, 14))
+        ttk.Label(header, text="MicroOps", style="Hero.TLabel").pack(anchor="w")
+        ttk.Label(header, text="Your offline operations workspace  ·  Tracking  ·  Supply  ·  Scheduling", style="HeaderSub.TLabel").pack(anchor="w", pady=(2, 0))
 
         self.notebook = ttk.Notebook(outer)
         self.notebook.pack(fill="both", expand=True)
@@ -92,7 +109,7 @@ class MicroOpsApp:
         prompt.pack(fill="x")
         self.request_text = tk.Text(prompt, height=4, wrap="word", font=("Segoe UI", 10), relief="solid", borderwidth=1)
         self.request_text.pack(fill="x", pady=(0, 10))
-        ttk.Button(prompt, text="Run local agents", command=self.run_agents).pack(anchor="e")
+        ttk.Button(prompt, text="Run local agents", style="Accent.TButton", command=self.run_agents).pack(anchor="e")
         self.auto_status = tk.StringVar(value="Autonomous checks starting…")
         ttk.Label(self.home_tab, textvariable=self.auto_status, font=("Segoe UI", 10, "bold")).pack(anchor="w", pady=(12, 2))
         ttk.Label(self.home_tab, text="Checks run every 15 seconds while this window is open. Agents detect issues and suggest actions; they never order supplies automatically.", wraplength=820).pack(anchor="w")
@@ -138,7 +155,7 @@ class MicroOpsApp:
         ttk.Label(controls, text="Epochs:").pack(side="left")
         self.epochs_var = tk.StringVar(value="80")
         ttk.Entry(controls, textvariable=self.epochs_var, width=8).pack(side="left", padx=6)
-        self.train_button = ttk.Button(controls, text="Train model", command=self.start_training)
+        self.train_button = ttk.Button(controls, text="Train model", style="Accent.TButton", command=self.start_training)
         self.train_button.pack(side="left", padx=6)
         self.training_status = tk.StringVar(value="Not trained yet")
         ttk.Label(controls, textvariable=self.training_status).pack(side="left", padx=10)
@@ -300,6 +317,8 @@ class MicroOpsApp:
         for column, heading in zip(columns, headings):
             tree.heading(column, text=heading)
             tree.column(column, width=160, anchor="w")
+        tree.tag_configure("even", background="#ffffff")
+        tree.tag_configure("odd", background="#f6f9fd")
         return tree
 
     def _change(self, operation: Callable[[], object]) -> bool:
@@ -375,8 +394,8 @@ class MicroOpsApp:
     @staticmethod
     def _fill(tree: ttk.Treeview, rows: list[tuple[tuple[object, ...], object]]) -> None:
         tree.delete(*tree.get_children())
-        for values, iid in rows:
-            tree.insert("", "end", iid=str(iid) if iid != "" else None, values=values)
+        for index, (values, iid) in enumerate(rows):
+            tree.insert("", "end", iid=str(iid) if iid != "" else None, values=values, tags=("even" if index % 2 == 0 else "odd",))
 
 
 def main() -> None:

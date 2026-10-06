@@ -104,16 +104,16 @@ class SchedulingAgent:
                 raise ValueError(f"{task['name']} has missing dependencies: {', '.join(missing)}")
         done: set[str] = set()
         result: list[dict[str, Any]] = []
-        day = 0
+        finish_by_name: dict[str, int] = {}
         while pending:
             ready = next((task for task in pending if all(dep.casefold() in done for dep in task.get("depends_on", []))), None)
             if ready is None:
                 raise ValueError("Dependencies contain a cycle; remove a dependency to continue.")
-            start = day
+            start = max((finish_by_name[dep.casefold()] for dep in ready.get("depends_on", [])), default=0)
             finish = start + int(ready["duration"])
             result.append({"name": ready["name"], "start_day": start, "finish_day": finish, "duration": int(ready["duration"])})
-            day = finish
             done.add(ready["name"].casefold())
+            finish_by_name[ready["name"].casefold()] = finish
             pending.remove(ready)
         return result
 
