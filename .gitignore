@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.venv/
+.idea/
+.vscode/
+data/microops.json
+data/microlm.pt
+data/microlm.pt.tmp
